@@ -1,6 +1,6 @@
 CC = emcc
 all:
-	$(CC) main.c shader.c painter.c ogl.c stb_image.c -O2 -s WASM=1 -s USE_GLFW=3 -s FULL_ES3=1 -s USE_WEBGL2=1 --preload-file assets -o index.html
+	$(CC) main.c painter.c ogl.c stb_image.c -O2 -s WASM=1 -s USE_GLFW=3 -s FULL_ES3=1 -s USE_WEBGL2=1 --preload-file assets -o index.html
 
 clean:
 	rm -rf index* 

@@ -137,8 +137,8 @@ int main(void)
 	//glBindFramebuffer (GL_FRAMEBUFFER, fb);
 	glClear(GL_COLOR_BUFFER_BIT);
 	
-	//oglUseProg(&app,tree_program);	
-	glUseProgram(tree_program);
+	oglUseProg(&app,tree_program);	
+	//glUseProgram(tree_program);
 	glBindVertexArray(three_vao);
 	glDrawArrays(GL_LINES, 0, tree.branches_no);
 
