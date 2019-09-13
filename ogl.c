@@ -14,6 +14,9 @@ oglApp oglInit(uint16_t window_width, uint16_t window_height, char* window_title
 	if (!glfwInit())
 		exit(1);
 
+	app.window_width = window_width;
+	app.window_height = window_height;
+
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
@@ -25,22 +28,20 @@ oglApp oglInit(uint16_t window_width, uint16_t window_height, char* window_title
 		exit(1);
 	}
 	glfwMakeContextCurrent(app.window);
-	memset(app.textures, 0,sizeof(oglTexture) * UINT8_MAX);
-	app.n_textures = 0;	
-	memset(app.c_texture, 0, sizeof(uint8_t));
 
-	memset(app.programs, 0,sizeof(oglProgram) * UINT8_MAX);
+	app.n_textures = 0;	
 	app.n_programs = 0;	
-	memset(app.c_program, 0, sizeof(uint8_t));
+	app.n_framebuffers = 0;
 
 	return app;
 }
+
 void oglLoadTexture(oglApp *app, char*filename, char *label){
 
 	uint8_t n = app->n_textures;
 
-	if (n == UINT8_MAX) {
-		printf("ERROR: Maximum number of textures %d has been reached\n",UINT8_MAX);	
+	if (n == TEXTURES) {
+		printf("ERROR: Maximum number of textures %d has been reached\n",TEXTURES);	
 		exit(1);
 	}
 
@@ -52,20 +53,95 @@ void oglLoadTexture(oglApp *app, char*filename, char *label){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-	int width, height, nrChannels;
-	unsigned char *data = stbi_load(filename, &width, &height, &nrChannels, 0);
-	if (data)
-	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	if (filename != NULL) {
+		int width, height, nrChannels;
+		unsigned char *data = stbi_load(filename, &width, &height, &nrChannels, 0);
+		if (data)
+		{
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+			glGenerateMipmap(GL_TEXTURE_2D);
+		}
+		else
+		{
+			printf("Failed to load texture\n");
+		}
+		stbi_image_free(data);	
+	}
+	else{
+		glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, app->window_width, app->window_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL );
 		glGenerateMipmap(GL_TEXTURE_2D);
+
 	}
-	else
-	{
-		printf("Failed to load texture\n");
-	}
-	stbi_image_free(data);	
+
 	strcpy(app->textures[0].label, label);
 	app->n_textures++;
+}
+
+void oglLoadFramebuffer(oglApp *app, char *label){
+
+	uint8_t n = app->n_framebuffers;
+
+	if (n == TEXTURES) {
+		printf("ERROR: Maximum number of framebuffers %d has been reached\n",FRAMEBUFFERS);	
+		exit(1);
+	}
+
+	GLuint fb;
+	glGenFramebuffers (1, &fb);
+	oglLoadTexture(app, NULL, "fb_tex");
+	oglUseTexture(app,"fb_tex");
+	glBindFramebuffer (GL_FRAMEBUFFER, fb);
+	glFramebufferTexture2D (GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, oglGetTexture(app,"fb_tex"), 0);
+	GLenum status = glCheckFramebufferStatus (GL_FRAMEBUFFER);
+	if (GL_FRAMEBUFFER_COMPLETE != status){
+		fprintf (stderr, "ERROR: incomplete framebuffer\n");
+	}
+	//oglUseFramebuffer(app,NULL);
+
+	app->programs[app->n_framebuffers].handler = fb;
+	strcpy(app->framebuffers[0].label, label);
+	app->n_framebuffers++;
+}
+
+void oglUseFramebuffer(oglApp *app, char *label){
+
+	if (label != NULL) {
+	if (strcmp(app->c_framebuffer,label) != 0) {
+		int i;
+		for (i = 0; i < UINT8_MAX; ++i) {
+			if (strcmp(app->framebuffers[i].label, label) == 0) {
+
+				glBindFramebuffer (GL_FRAMEBUFFER, oglGetFramebuffer(app,label));
+				strcpy(app->c_framebuffer, label);
+				break;	
+			}		
+		}	
+		if (i == UINT8_MAX) {
+			printf("ERROR: could not find \"%s\" framebuffer\n",label);
+		}
+
+	}	
+	else{
+
+				glBindFramebuffer (GL_FRAMEBUFFER, 0);
+
+			memset(app->c_framebuffer, 0, sizeof(uint8_t));
+	}
+	}
+	
+}
+GLuint oglGetFramebuffer(oglApp *app, char *label){
+
+	int i;
+	for (i = 0; i < UINT8_MAX; ++i) {
+		if (strcmp(app->framebuffers[i].label, label) == 0) {
+			return app->framebuffers[i].handler;
+		}		
+	}	
+	if (i == UINT8_MAX) {
+		printf("ERROR: could not get \"%s\" framebuffer\n",label);
+	}
+	return 0;
 }
 
 void oglUseTexture(oglApp *app, char *label){
@@ -75,7 +151,7 @@ void oglUseTexture(oglApp *app, char *label){
 		for (i = 0; i < UINT8_MAX; ++i) {
 			if (strcmp(app->textures[i].label, label) == 0) {
 				glBindTexture(GL_TEXTURE_2D, app->textures[i].handler);
-				memset(app->c_texture, 0, sizeof(uint8_t));
+				//memset(app->c_texture, 0, sizeof(uint8_t));
 				strcpy(app->c_texture, label);
 				break;	
 			}		
@@ -159,8 +235,8 @@ void oglProgLoad(oglApp *app, const char *vertFilename, const char *fragFilename
 
 	uint8_t n = app->n_programs;
 
-	if (n == UINT8_MAX) {
-		printf("ERROR: Maximum number of shader programs %d has been reached\n",UINT8_MAX);	
+	if (n == SHADER_PROGRAMS) {
+		printf("ERROR: Maximum number of shader programs %d has been reached\n",SHADER_PROGRAMS);	
 		exit(1);
 	}
 
@@ -209,12 +285,26 @@ void oglProgLoad(oglApp *app, const char *vertFilename, const char *fragFilename
 	strcpy(app->programs[app->n_programs].label, label);
 	app->n_programs++;
 	/*
-	printf("Shader program %s was loaded with a GLuint %d, currently there are %d programs in the app\n",
-			label,
-			app->programs[app->n_programs].handler,
-			app->n_programs);
-	*/
+	   printf("Shader program %s was loaded with a GLuint %d, currently there are %d programs in the app\n",
+	   label,
+	   app->programs[app->n_programs].handler,
+	   app->n_programs);
+	   */
 }
+GLuint oglGetTexture(oglApp *app, char *label){
+
+	int i;
+	for (i = 0; i < UINT8_MAX; ++i) {
+		if (strcmp(app->textures[i].label, label) == 0) {
+			return app->textures[i].handler;
+		}		
+	}	
+	if (i == UINT8_MAX) {
+		printf("ERROR: could not get \"%s\" texture\n",label);
+	}
+	return 0;
+}
+
 GLuint oglGetProg(oglApp *app, char *label){
 
 	int i;
@@ -224,7 +314,8 @@ GLuint oglGetProg(oglApp *app, char *label){
 		}		
 	}	
 	if (i == UINT8_MAX) {
-		printf("ERROR: could not get %s shader program\n",label);
+		printf("ERROR: could not get \"%s\" shader program\n",label);
+
 	}
 	return 0;
 }
@@ -236,13 +327,13 @@ void oglUseProg(oglApp *app, char *label){
 		for (i = 0; i < UINT8_MAX; ++i) {
 			if (strcmp(app->programs[i].label, label) == 0) {
 				glUseProgram(app->programs[i].handler);
-				memset(app->c_program, 0, sizeof(uint8_t));
+				//memset(app->c_program, 0, sizeof(uint8_t));
 				strcpy(app->c_program, label);
 				break;	
 			}		
 		}	
 		if (i == UINT8_MAX) {
-			printf("ERROR: could not find %s shader program\n",label);
+			printf("ERROR: could not find \"%s\" shader program\n",label);
 		}
 
 	}
@@ -258,9 +349,11 @@ void oglProgDelete(oglApp *app, char *label){
 		}		
 	}	
 	if (i == UINT8_MAX) {
-		printf("ERROR: could not delete %s shader program\n",label);
+		printf("ERROR: could not delete \"%s\" shader program\n",label);
 	}
 
 }
+
+
 
 

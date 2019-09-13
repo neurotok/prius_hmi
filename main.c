@@ -17,10 +17,9 @@
 //#include "shader.h"
 #include "painter.h"
 
-enum {
-	WINDOW_WIDTH = 1280,
-	WINDOW_HEIGHT = 480
-};
+
+oglApp test;
+
 
 typedef struct ogl_rect{
 	float vert[24];
@@ -44,7 +43,7 @@ float generic_quad[] = {
 void do_frame(void *arg){
 
 	oglApp *app = arg;
-
+	
 	glClear(GL_COLOR_BUFFER_BIT);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -60,7 +59,7 @@ void do_frame(void *arg){
 
 int main(void)
 {
-	oglApp app = oglInit(WINDOW_WIDTH, WINDOW_HEIGHT, "Prius HMI");
+	oglApp app = oglInit(1280, 480, "Prius HMI");
 
 	oglProgLoad(&app,"./assets/basic_vs.glsl","./assets/basic_fs.glsl", "simple_program");
 	oglProgLoad(&app,"./assets/tree_vs.glsl", "./assets/tree_fs.glsl", "tree_program");
@@ -70,7 +69,6 @@ int main(void)
 
 	oglTree tree  = oglGrowTree(0.18,14, 5, 0.75);
 
-	
 	GLuint three_vao, tree_vbo;
 	glGenVertexArrays(1, &three_vao);
 	glBindVertexArray(three_vao);
@@ -103,58 +101,32 @@ int main(void)
 	
 	glVertexAttribPointer(2,2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(6*sizeof(float)));
 	glEnableVertexAttribArray(2);
-
-
-	//oglLoadTexture(&app,"./assets/grass.png","grass");	
 	
-	GLuint fb;
-	glGenFramebuffers (1, &fb);
-	GLuint fb_tex;
-	glGenTextures (1, &fb_tex); 
-	glBindTexture (GL_TEXTURE_2D, fb_tex);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, WINDOW_WIDTH, WINDOW_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL );
-	glGenerateMipmap(GL_TEXTURE_2D);
-	glBindFramebuffer (GL_FRAMEBUFFER, fb);
-	glFramebufferTexture2D (GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fb_tex, 0);
+	oglLoadFramebuffer(&app, "fb");
+	//oglUseFramebuffer(&app, "fb");
 
-	GLenum status = glCheckFramebufferStatus (GL_FRAMEBUFFER);
-	if (GL_FRAMEBUFFER_COMPLETE != status){
-		fprintf (stderr, "ERROR: incomplete framebuffer\n");
-	}
-
-
-	//glBindFramebuffer (GL_FRAMEBUFFER, fb);
 	glClear(GL_COLOR_BUFFER_BIT);
 	
-	//oglUseProg(&app,tree_program);	
-	//oglUseProg(&app,app.shader_programs[0]);	
+
 	oglUseProg(&app,"tree_program");
-	//oglUseTexture(&app,"texture_quad_program");
-	//glUseProgram(tree_program);
+
+
 	glBindVertexArray(three_vao);
 	glDrawArrays(GL_LINES, 0, tree.branches_no);
 
+
+	oglUseFramebuffer(&app,NULL);
 	glBindFramebuffer (GL_FRAMEBUFFER, 0);
 
 	glBindVertexArray(three_vao);
 
 	glClearColor(0.56f, 0.72f, 0.69f, 1.0f);
 	oglUseProg(&app,"texture_quad_program");
-	//glUseProgram(texture_quad_program);
-	//oglUseTexture(&app,grass);
-	//glBindTexture(GL_TEXTURE_2D, app.textures[0].handler);
-	//glBindTexture(GL_TEXTURE_2D,2);
-	glBindTexture(GL_TEXTURE_2D,fb_tex);
-	//oglUseTexture(&app,"grass");
+	oglUseTexture(&app,"fb_tex");
 	glUniform1i (tex_loc, 0);
 	glBindVertexArray(quad_vao);
 #ifdef __EMSCRIPTEN__
 	emscripten_set_main_loop_arg(do_frame,&app, -1, 1);
-	//emscripten_set_main_loop(do_frame, 0, 1);
 #else
 	while (!glfwWindowShouldClose(app.window))
 	{
