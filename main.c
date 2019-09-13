@@ -51,7 +51,6 @@ void do_frame(void *arg){
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 	glDisable(GL_BLEND);
 	
-
 	//glBindTexture(GL_TEXTURE_2D,0);
 	//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
@@ -61,20 +60,13 @@ void do_frame(void *arg){
 
 int main(void)
 {
-
 	oglApp app = oglInit(WINDOW_WIDTH, WINDOW_HEIGHT, "Prius HMI");
 
-	GLuint simple_program = oglProgLoad(&app,"./assets/basic_vs.glsl","./assets/basic_fs.glsl");
-	if (!simple_program) return EXIT_FAILURE;
+	oglProgLoad(&app,"./assets/basic_vs.glsl","./assets/basic_fs.glsl", "simple_program");
+	oglProgLoad(&app,"./assets/tree_vs.glsl", "./assets/tree_fs.glsl", "tree_program");
+	oglProgLoad(&app,"./assets/texture_vs.glsl", "./assets/texture_fs.glsl","texture_quad_program");
 
-	GLuint tree_program = oglProgLoad(&app,"./assets/tree_vs.glsl", "./assets/tree_fs.glsl");
-	if (!tree_program) return EXIT_FAILURE;
-		
- 	
-	GLuint texture_quad_program = oglProgLoad(&app,"./assets/texture_vs.glsl", "./assets/texture_fs.glsl");
-	if (!texture_quad_program) return EXIT_FAILURE;
-
-	int tex_loc = glGetUniformLocation (texture_quad_program, "texture1");	
+	int tex_loc = glGetUniformLocation (oglGetProg(&app,"texture_quad_program"), "texture1");	
 
 	oglTree tree  = oglGrowTree(0.18,14, 5, 0.75);
 
@@ -113,7 +105,7 @@ int main(void)
 	glEnableVertexAttribArray(2);
 
 
-	GLuint grass = oglLoadTexture(&app,"./assets/grass.png");	
+	//oglLoadTexture(&app,"./assets/grass.png","grass");	
 	
 	GLuint fb;
 	glGenFramebuffers (1, &fb);
@@ -134,10 +126,14 @@ int main(void)
 		fprintf (stderr, "ERROR: incomplete framebuffer\n");
 	}
 
+
 	//glBindFramebuffer (GL_FRAMEBUFFER, fb);
 	glClear(GL_COLOR_BUFFER_BIT);
 	
-	oglUseProg(&app,tree_program);	
+	//oglUseProg(&app,tree_program);	
+	//oglUseProg(&app,app.shader_programs[0]);	
+	oglUseProg(&app,"tree_program");
+	//oglUseTexture(&app,"texture_quad_program");
 	//glUseProgram(tree_program);
 	glBindVertexArray(three_vao);
 	glDrawArrays(GL_LINES, 0, tree.branches_no);
@@ -147,11 +143,13 @@ int main(void)
 	glBindVertexArray(three_vao);
 
 	glClearColor(0.56f, 0.72f, 0.69f, 1.0f);
-	glUseProgram(texture_quad_program);
+	oglUseProg(&app,"texture_quad_program");
+	//glUseProgram(texture_quad_program);
 	//oglUseTexture(&app,grass);
 	//glBindTexture(GL_TEXTURE_2D, app.textures[0].handler);
 	//glBindTexture(GL_TEXTURE_2D,2);
 	glBindTexture(GL_TEXTURE_2D,fb_tex);
+	//oglUseTexture(&app,"grass");
 	glUniform1i (tex_loc, 0);
 	glBindVertexArray(quad_vao);
 #ifdef __EMSCRIPTEN__
@@ -165,7 +163,6 @@ int main(void)
 #endif 
 
 	oglCutTree(&tree);
-	oglProgDelete(texture_quad_program);	
 	
 	return 0;
 }

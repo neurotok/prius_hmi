@@ -1,18 +1,23 @@
 #pragma once
 #include <GLFW/glfw3.h>
 
-typedef struct ogl_shader {
-	GLint shader_program;
-	uint8_t id;
-}oglShader;
+typedef struct ogl_shader_program {
+	GLint handler;
+	char label[UINT8_MAX];
+}oglProgram;
+
+typedef struct ogl_texture {
+	GLuint handler;
+	char label[UINT8_MAX];
+}oglTexture;
 
 typedef struct ogl_app {
 	GLFWwindow* window;
-	GLuint shader_programs[UINT8_MAX];
-	GLuint c_program;
+	oglProgram programs[UINT8_MAX];
+	char c_program[UINT8_MAX];
 	uint8_t n_programs;
-	GLuint textures[UINT8_MAX];
-	GLuint c_texture;
+	oglTexture textures[UINT8_MAX];
+	char c_texture[UINT8_MAX];
 	uint8_t n_textures;
 	GLuint framebuffers[UINT8_MAX];
 	GLuint c_framebuffer;
@@ -21,8 +26,9 @@ typedef struct ogl_app {
 }oglApp;
 
 oglApp oglInit(uint16_t , uint16_t , char* );
-GLuint oglLoadTexture(oglApp *, char*);
-void oglUseTexture(oglApp *, GLuint);
-GLuint oglProgLoad(oglApp *,const char *, const char *);
-void oglProgDelete(GLuint);
-void oglUseProg(oglApp *, GLuint );
+void oglLoadTexture(oglApp *, char*, char*);
+void oglUseTexture(oglApp *, char *);
+void oglProgLoad(oglApp *,const char *, const char *, char *);
+void oglUseProg(oglApp *, char*);
+GLuint oglGetProg(oglApp *, char*);
+void oglProgDelete(oglApp *app, char *label);

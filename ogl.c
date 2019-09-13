@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <GLES3/gl3.h>
 
@@ -8,6 +9,8 @@
 
 oglApp oglInit(uint16_t window_width, uint16_t window_height, char* window_title){
 
+	oglApp app; // = malloc(sizeof(oglApp));
+
 	if (!glfwInit())
 		exit(1);
 
@@ -15,77 +18,73 @@ oglApp oglInit(uint16_t window_width, uint16_t window_height, char* window_title
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
-	oglApp app = {
-		.window = glfwCreateWindow(window_width, window_height, window_title, NULL, NULL),
-		.shader_programs = {0},
-		.c_program = 0,
-		.n_programs = 0,
-		.textures = {0},
-		.c_texture = 0,
-		.n_textures = 0,
-		.framebuffers = {0},
-		.c_framebuffer = 0,
-		.n_framebuffers = 0
-	};
+	app.window =  glfwCreateWindow(window_width, window_height, window_title, NULL, NULL);
 
 	if (!app.window){
 		glfwTerminate();
 		exit(1);
 	}
 	glfwMakeContextCurrent(app.window);
+	memset(app.textures, 0,sizeof(oglTexture) * UINT8_MAX);
+	app.n_textures = 0;	
+	memset(app.c_texture, 0, sizeof(uint8_t));
 
- return app;
+	memset(app.programs, 0,sizeof(oglProgram) * UINT8_MAX);
+	app.n_programs = 0;	
+	memset(app.c_program, 0, sizeof(uint8_t));
+
+	return app;
 }
+void oglLoadTexture(oglApp *app, char*filename, char *label){
 
-GLuint oglLoadTexture(oglApp *app, char*filename){
-	
 	uint8_t n = app->n_textures;
 
 	if (n == UINT8_MAX) {
 		printf("ERROR: Maximum number of textures %d has been reached\n",UINT8_MAX);	
 		exit(1);
 	}
-	GLuint tex;
 
-	glGenTextures(1, &tex);
-	glBindTexture(GL_TEXTURE_2D, tex);
+	GLuint *tex = &(app->textures[n].handler);
+	glGenTextures(1, tex);
+	glBindTexture(GL_TEXTURE_2D, *tex);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
 	int width, height, nrChannels;
-    unsigned char *data = stbi_load(filename, &width, &height, &nrChannels, 0);
-    if (data)
-    {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	unsigned char *data = stbi_load(filename, &width, &height, &nrChannels, 0);
+	if (data)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
-    }
-    else
-    {
+	}
+	else
+	{
 		printf("Failed to load texture\n");
-    }
-    stbi_image_free(data);	
-	app->textures[app->n_textures] = tex;
+	}
+	stbi_image_free(data);	
+	strcpy(app->textures[0].label, label);
 	app->n_textures++;
-	return tex;
 }
 
-void oglUseTexture(oglApp *app, GLuint texure){
+void oglUseTexture(oglApp *app, char *label){
 
-	if(app->c_texture != texure){
+	if (strcmp(app->c_texture,label) != 0) {
 		int i;
 		for (i = 0; i < UINT8_MAX; ++i) {
-			if (app->textures[i] == texure) {
-				glBindTexture(GL_TEXTURE_2D, app->textures[i]);
+			if (strcmp(app->textures[i].label, label) == 0) {
+				glBindTexture(GL_TEXTURE_2D, app->textures[i].handler);
+				memset(app->c_texture, 0, sizeof(uint8_t));
+				strcpy(app->c_texture, label);
 				break;	
 			}		
 		}	
 		if (i == UINT8_MAX) {
-			printf("ERROR: could not find texture\n");
+			printf("ERROR: could not find %s texture\n",label);
 		}
+
 	}
-		
 }
 
 
@@ -98,6 +97,9 @@ static size_t fileGetLenght(FILE *file){
 	fseek(file, currPos, SEEK_SET);
 	return lenght;
 }
+
+
+
 
 static GLuint oglShaderLoad(const char *filename, GLenum shaderType){
 
@@ -153,17 +155,24 @@ static void oglShaderDelete(GLuint shaderID){
 	glDeleteShader(shaderID);
 }
 
-GLuint oglProgLoad(oglApp *app, const char *vertFilename, const char *fragFilename){
+void oglProgLoad(oglApp *app, const char *vertFilename, const char *fragFilename, char *label){
+
+	uint8_t n = app->n_programs;
+
+	if (n == UINT8_MAX) {
+		printf("ERROR: Maximum number of shader programs %d has been reached\n",UINT8_MAX);	
+		exit(1);
+	}
 
 	GLuint vertShader = oglShaderLoad(vertFilename, GL_VERTEX_SHADER);
 	if (!vertShader) {
 		printf("Couldn't load vertex shader: %s\n",vertFilename);
-		return 0;
+		exit(1);
 	}
 	GLuint fragShader = oglShaderLoad(fragFilename, GL_FRAGMENT_SHADER);
 	if (!fragShader) {
 		printf("Couldn't load fragment shader: %s\n",fragFilename);
-		return 0;
+		exit(1);
 	}
 
 	GLuint shaderProg = glCreateProgram();
@@ -196,29 +205,62 @@ GLuint oglProgLoad(oglApp *app, const char *vertFilename, const char *fragFilena
 	}
 	oglShaderDelete(vertShader);
 	oglShaderDelete(fragShader);
-	app->shader_programs[app->n_programs] = shaderProg;
-	return shaderProg;
+	app->programs[app->n_programs].handler = shaderProg;
+	strcpy(app->programs[app->n_programs].label, label);
+	app->n_programs++;
+	/*
+	printf("Shader program %s was loaded with a GLuint %d, currently there are %d programs in the app\n",
+			label,
+			app->programs[app->n_programs].handler,
+			app->n_programs);
+	*/
+}
+GLuint oglGetProg(oglApp *app, char *label){
+
+	int i;
+	for (i = 0; i < UINT8_MAX; ++i) {
+		if (strcmp(app->programs[i].label, label) == 0) {
+			return app->programs[i].handler;
+		}		
+	}	
+	if (i == UINT8_MAX) {
+		printf("ERROR: could not get %s shader program\n",label);
+	}
+	return 0;
 }
 
-void oglUseProg(oglApp *app, GLuint program){
+void oglUseProg(oglApp *app, char *label){
 
-	if(app->c_program != program){
+	if (strcmp(app->c_program,label) != 0) {
 		int i;
 		for (i = 0; i < UINT8_MAX; ++i) {
-			if (app->shader_programs[i] == program) {
-				glUseProgram(program);
+			if (strcmp(app->programs[i].label, label) == 0) {
+				glUseProgram(app->programs[i].handler);
+				memset(app->c_program, 0, sizeof(uint8_t));
+				strcpy(app->c_program, label);
 				break;	
 			}		
 		}	
 		if (i == UINT8_MAX) {
-			printf("ERROR: could not find program\n");
-
+			printf("ERROR: could not find %s shader program\n",label);
 		}
+
 	}
 }
 
-void oglProgDelete(GLuint shaderProg){
-	glDeleteProgram(shaderProg);
+void oglProgDelete(oglApp *app, char *label){
+
+	int i;
+	for (i = 0; i < UINT8_MAX; ++i) {
+		if (strcmp(app->programs[i].label, label) == 0) {
+			glDeleteProgram(app->programs[i].handler);
+			break;	
+		}		
+	}	
+	if (i == UINT8_MAX) {
+		printf("ERROR: could not delete %s shader program\n",label);
+	}
+
 }
 
 
