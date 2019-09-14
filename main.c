@@ -50,8 +50,6 @@ void do_frame(void *arg){
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 	glDisable(GL_BLEND);
 	
-	//glBindTexture(GL_TEXTURE_2D,0);
-	//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 	glfwSwapBuffers(app->window);
 	glfwPollEvents();
@@ -103,20 +101,16 @@ int main(void)
 	glEnableVertexAttribArray(2);
 	
 	oglLoadFramebuffer(&app, "fb");
-	//oglUseFramebuffer(&app, "fb");
+	oglUseFramebuffer(&app, "fb");
 
 	glClear(GL_COLOR_BUFFER_BIT);
 	
-
 	oglUseProg(&app,"tree_program");
-
 
 	glBindVertexArray(three_vao);
 	glDrawArrays(GL_LINES, 0, tree.branches_no);
 
-
 	oglUseFramebuffer(&app,NULL);
-	glBindFramebuffer (GL_FRAMEBUFFER, 0);
 
 	glBindVertexArray(three_vao);
 

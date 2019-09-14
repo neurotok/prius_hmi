@@ -1,9 +1,11 @@
 #pragma once
 #include <GLFW/glfw3.h>
 
-#define TEXTURES (32)
-#define SHADER_PROGRAMS (32)
-#define FRAMEBUFFERS (32)
+enum {
+	TEXTURES = 32,
+	SHADER_PROGRAMS = 32,
+	FRAMEBUFFERS = 32
+};
 
 typedef struct ogl_shader_program {
 	GLint handler;
