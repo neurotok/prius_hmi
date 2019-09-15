@@ -14,7 +14,6 @@
 #include "stb_image.h"
 
 #include "ogl.h"
-//#include "shader.h"
 #include "painter.h"
 
 
@@ -60,10 +59,12 @@ int main(void)
 	oglApp app = oglInit(1280, 480, "Prius HMI");
 
 	oglProgLoad(&app,"./assets/basic_vs.glsl","./assets/basic_fs.glsl", "simple_program");
+
 	oglProgLoad(&app,"./assets/tree_vs.glsl", "./assets/tree_fs.glsl", "tree_program");
 	oglProgLoad(&app,"./assets/texture_vs.glsl", "./assets/texture_fs.glsl","texture_quad_program");
 
 	int tex_loc = glGetUniformLocation (oglGetProg(&app,"texture_quad_program"), "texture1");	
+	int trans_loc = glGetUniformLocation(oglGetProg(&app, "texture_quad_program"), "transform");
 
 	oglTree tree  = oglGrowTree(0.18,14, 5, 0.75);
 
@@ -99,7 +100,12 @@ int main(void)
 	
 	glVertexAttribPointer(2,2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(6*sizeof(float)));
 	glEnableVertexAttribArray(2);
-	
+
+	mat4x4 transform;
+	mat4x4_identity(transform);
+	mat4x4_translate(transform, 0.5f, 0.0f, 0.0f);	
+
+
 	oglLoadFramebuffer(&app, "fb");
 	oglUseFramebuffer(&app, "fb");
 
@@ -118,6 +124,7 @@ int main(void)
 	oglUseProg(&app,"texture_quad_program");
 	oglUseTexture(&app,"fb_tex");
 	glUniform1i (tex_loc, 0);
+	glUniformMatrix4fv(trans_loc, 1, GL_FALSE, transform[0]);
 	glBindVertexArray(quad_vao);
 #ifdef __EMSCRIPTEN__
 	emscripten_set_main_loop_arg(do_frame,&app, -1, 1);

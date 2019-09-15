@@ -7,6 +7,18 @@ enum {
 	FRAMEBUFFERS = 32
 };
 
+typedef struct ogl_camera {
+	float cam_left;
+	float cam_right;
+	float cam_top;
+	float cam_bottom;
+	float cam_pos_x;
+	float cam_pos_y;
+	float cam_pos_z;
+	float cam_near;
+	float cam_far;
+}oglCam;
+
 typedef struct ogl_shader_program {
 	GLint handler;
 	char label[UINT8_MAX];
