@@ -19,6 +19,13 @@ typedef struct ogl_camera {
 	float cam_far;
 }oglCam;
 
+typedef struct ogl_rect{
+	float x;
+	float y;
+	float w;
+	float h;
+} oglRect;
+
 typedef struct ogl_shader_program {
 	GLint handler;
 	char label[UINT8_MAX];

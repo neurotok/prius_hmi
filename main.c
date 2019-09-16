@@ -49,7 +49,6 @@ void do_frame(void *arg){
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 	glDisable(GL_BLEND);
 	
-
 	glfwSwapBuffers(app->window);
 	glfwPollEvents();
 }
