@@ -1,4 +1,5 @@
 #pragma once
+
 #include <GLFW/glfw3.h>
 
 enum {
@@ -52,6 +53,7 @@ typedef struct ogl_app {
 	char c_framebuffer[UINT8_MAX];
 	uint8_t n_framebuffers;
 	oglBuffer *buffers;
+	char c_buffer[UINT8_MAX];
 }oglApp;
 
 oglApp oglInit(uint16_t , uint16_t , char* );
@@ -65,3 +67,7 @@ void oglProgDelete(oglApp *, char *);
 void oglLoadFramebuffer(oglApp *, char *);
 void oglUseFramebuffer(oglApp *app, char *label);
 GLuint oglGetFramebuffer(oglApp *app, char *label);
+//GLuint oglGetBuffer(oglApp *app, char *label);
+void oglUseBuffer(oglApp *app, char *label);
+
+

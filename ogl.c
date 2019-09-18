@@ -6,6 +6,7 @@
 
 #include "ogl.h"
 #include "stb_image.h"
+#include "stretchy_buffer.h"
 
 oglApp oglInit(uint16_t window_width, uint16_t window_height, char* window_title){
 
@@ -118,7 +119,7 @@ void oglUseFramebuffer(oglApp *app, char *label){
 			int i;
 			for (i = 0; i < FRAMEBUFFERS; ++i) {
 				if (strcmp(app->framebuffers[i].label, label) == 0) {
-					glBindFramebuffer (GL_FRAMEBUFFER, oglGetFramebuffer(app,label));
+					glBindFramebuffer (GL_FRAMEBUFFER, app->framebuffers[i].handler);
 					strcpy(app->c_framebuffer, label);
 					break;	
 				}		
@@ -135,6 +136,7 @@ void oglUseFramebuffer(oglApp *app, char *label){
 	}
 
 }
+/*
 GLuint oglGetFramebuffer(oglApp *app, char *label){
 
 	int i;
@@ -148,7 +150,7 @@ GLuint oglGetFramebuffer(oglApp *app, char *label){
 	}
 	return 0;
 }
-
+*/
 void oglUseTexture(oglApp *app, char *label){
 
 	if (strcmp(app->c_texture,label) != 0) {
@@ -359,6 +361,40 @@ void oglProgDelete(oglApp *app, char *label){
 
 }
 
+void oglUseBuffer(oglApp *app, char *label){
+
+		if (strcmp(app->c_buffer,label) != 0) {
+			int i;
+			int n = stb_sb_count(app->buffers);
+			for (i = 0; i < n; ++i) {
+				if (strcmp(app->buffers[i].label, label) == 0) {
+					glBindVertexArray(app->buffers[i].handler);
+					strcpy(app->c_buffer, label);
+					break;	
+				}		
+			}	
+			if (i == n) {
+				printf("ERROR: could not find \"%s\" buffer\n",label);
+			}
+		}	
+
+}
+
+GLuint oglGetBuffer(oglApp *app, char *label){
+
+	int i;
+	int n = sb_count(app->buffers);
+	for (i = 0; i < n; ++i) {
+		if (strcmp(app->buffers[i].label, label) == 0) {
+			return app->buffers[i].handler;
+		}		
+	}	
+	if (i == n) {
+		printf("ERROR: could not get \"%s\" buffer\n",label);
+
+	}
+	return 0;
+}
 
 
 
