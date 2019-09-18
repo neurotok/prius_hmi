@@ -33,6 +33,9 @@ oglApp oglInit(uint16_t window_width, uint16_t window_height, char* window_title
 	app.n_programs = 0;	
 	app.n_framebuffers = 0;
 
+	app.buffers = NULL;
+
+
 	return app;
 }
 

@@ -19,12 +19,10 @@ typedef struct ogl_camera {
 	float cam_far;
 }oglCam;
 
-typedef struct ogl_rect{
-	float x;
-	float y;
-	float w;
-	float h;
-} oglRect;
+typedef struct ogl_buffer{
+	GLuint handler;
+	char label[UINT8_MAX];
+} oglBuffer;
 
 typedef struct ogl_shader_program {
 	GLint handler;
@@ -53,6 +51,7 @@ typedef struct ogl_app {
 	oglFramebuffer framebuffers[FRAMEBUFFERS];
 	char c_framebuffer[UINT8_MAX];
 	uint8_t n_framebuffers;
+	oglBuffer *buffers;
 }oglApp;
 
 oglApp oglInit(uint16_t , uint16_t , char* );
