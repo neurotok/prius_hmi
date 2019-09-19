@@ -54,6 +54,7 @@ typedef struct ogl_app {
 	uint8_t n_framebuffers;
 	oglBuffer *buffers;
 	char c_buffer[UINT8_MAX];
+	GLuint *uniforms;
 }oglApp;
 
 oglApp oglInit(uint16_t , uint16_t , char* );

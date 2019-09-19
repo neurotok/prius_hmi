@@ -22,10 +22,21 @@ void do_frame(void *arg){
 
 	oglApp *app = arg;
 
+	mat4x4 transform;
+	mat4x4_identity(transform);
+	mat4x4_translate(transform, 0.5f, 0.0f, 0.0f);	
+
+	glClearColor(0.56f, 0.72f, 0.69f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	oglUseProg(app,"texture_quad_program");
+	oglUseTexture(app,"fb_tex");
+	glUniformMatrix4fv(app->uniforms[0], 1, GL_FALSE, transform[0]);
+	oglUseBuffer(app, "tree_canvas");
 	oglDrawQuad();
+
 	glDisable(GL_BLEND);
 
 	glfwSwapBuffers(app->window);
@@ -40,8 +51,10 @@ int main(void)
 	oglProgLoad(&app,"./assets/tree_vs.glsl", "./assets/tree_fs.glsl", "tree_program");
 	oglProgLoad(&app,"./assets/texture_vs.glsl", "./assets/texture_fs.glsl","texture_quad_program");
 
-	int tex_loc = glGetUniformLocation (oglGetProg(&app,"texture_quad_program"), "texture1");	
-	int trans_loc = glGetUniformLocation(oglGetProg(&app, "texture_quad_program"), "transform");
+	GLuint transformations[1];
+	transformations[0] = glGetUniformLocation(oglGetProg(&app, "texture_quad_program"), "transform");
+		
+	app.uniforms = transformations;
 
 	oglTree tree  = oglGrowTree(0.18,14, 5, 0.75);
 
@@ -57,10 +70,6 @@ int main(void)
 	};
 	stb_sb_push(app.buffers,tree_canvas);
 
-	mat4x4 transform;
-	mat4x4_identity(transform);
-	mat4x4_translate(transform, 0.5f, 0.0f, 0.0f);	
-
 	oglLoadFramebuffer(&app, "fb");
 
 	oglUseFramebuffer(&app, "fb");
@@ -70,12 +79,6 @@ int main(void)
 	oglDrawTree(&tree);	
 
 	oglUseFramebuffer(&app,NULL);
-	glClearColor(0.56f, 0.72f, 0.69f, 1.0f);
-	oglUseProg(&app,"texture_quad_program");
-	oglUseTexture(&app,"fb_tex");
-	glUniform1i (tex_loc, 0);
-	glUniformMatrix4fv(trans_loc, 1, GL_FALSE, transform[0]);
-	oglUseBuffer(&app, "tree_canvas");
 
 #ifdef __EMSCRIPTEN__
 	emscripten_set_main_loop_arg(do_frame,&app, -1, 1);
