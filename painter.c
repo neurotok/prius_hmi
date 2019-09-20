@@ -80,8 +80,28 @@ void oglCutTree(oglTree *tree){
 	free(tree->random_branches);
 }
 
-GLuint oglLoadQuad(){
+GLuint oglLoadQuad(oglApp *app, int x, int y, int w, int h, int col1){
 
+
+	float r = ((col1 >> 16) & 0xFF) / 255.0;
+	float g = ((col1 >> 8) & 0xFF) / 255.0;
+	float b = ((col1) & 0xFF) / 255.0;
+
+	float wc = 2.0f * (float)w / (float)(app->window_width);
+	float hc = 2.0f * (float)h / (float)(app->window_height);
+	float xc = 2.0f * (float)x / (float)(app->window_width);
+	float yc = 2.0f * (float)y / (float)(app->window_height);
+
+	printf("%f %f\n", xc, yc);
+
+
+	float quad[] = {
+		-1.0f + xc, 1.0f - yc, 0.0f, r, g, b, 0.0f, 0.0f,
+		-1.0f + xc + wc, 1.0f - yc, 0.0f, r, g, b, 1.0f, 0.0f,
+		-1.0f + xc + wc, 1.0f - yc - hc, 0.0f, r, g, b, 1.0f, 1.0f,
+		-1.0f + xc, 1.0f - yc - hc, 0.0f, r, g, b, 0.0f, 1.0f
+	};
+	
 	GLuint quad_vao, quad_vbo, quad_ebo;
 
 	glGenVertexArrays(1, &quad_vao);
@@ -90,7 +110,7 @@ GLuint oglLoadQuad(){
 
 	glBindVertexArray(quad_vao);
 	glBindBuffer(GL_ARRAY_BUFFER, quad_vbo);	
-	glBufferData(GL_ARRAY_BUFFER, sizeof(generic_quad), generic_quad, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quad), quad, GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quad_ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(generic_quad_indices), generic_quad_indices, GL_STATIC_DRAW);
@@ -124,10 +144,12 @@ GLuint oglLoadTree(oglTree *tree){
 }
 
 void oglDrawTree(oglTree *tree){
+	glLineWidth(2);
 	glDrawArrays(GL_LINES, 0, tree->branches_no);
 }
 
 void oglDrawQuad(void){
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
+
 

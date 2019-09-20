@@ -17,27 +17,41 @@
 #include "painter.h"
 #include "ogl.h"
 
-
 void do_frame(void *arg){
 
 	oglApp *app = arg;
 
+	uint8_t fuel_level = 100;
+
 	mat4x4 transform;
 	mat4x4_identity(transform);
-	mat4x4_translate(transform, 0.5f, 0.0f, 0.0f);	
+	//mat4x4_translate(transform, 1.5f, 0.0f, 0.0f);	
+	mat4x4_translate(transform, 2.0f -  (float)fuel_level / 100.0f * 2.0f, 0.0f, 0.0f);	
 
 	glClearColor(0.56f, 0.72f, 0.69f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
+
+	//Fuel gage
+	oglUseProg(app,"simple_program");
+	glUniformMatrix4fv(app->uniforms[0], 1, GL_FALSE, transform[0]);
+	oglUseBuffer(app,"fuel");
+	oglDrawQuad();
+
+	//Tree canvas
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	oglUseProg(app,"texture_quad_program");
 	oglUseTexture(app,"fb_tex");
-	glUniformMatrix4fv(app->uniforms[0], 1, GL_FALSE, transform[0]);
 	oglUseBuffer(app, "tree_canvas");
+
+	mat4x4_identity(transform);
+
+	glUniformMatrix4fv(app->uniforms[1], 1, GL_FALSE, transform[0]);
 	oglDrawQuad();
 
 	glDisable(GL_BLEND);
+
 
 	glfwSwapBuffers(app->window);
 	glfwPollEvents();
@@ -51,33 +65,43 @@ int main(void)
 	oglProgLoad(&app,"./assets/tree_vs.glsl", "./assets/tree_fs.glsl", "tree_program");
 	oglProgLoad(&app,"./assets/texture_vs.glsl", "./assets/texture_fs.glsl","texture_quad_program");
 
-	GLuint transformations[1];
-	transformations[0] = glGetUniformLocation(oglGetProg(&app, "texture_quad_program"), "transform");
-		
-	app.uniforms = transformations;
+	GLuint transformations[2];
+	transformations[0] = glGetUniformLocation(oglGetProg(&app, "simple_program"), "transform");
+	transformations[1] = glGetUniformLocation(oglGetProg(&app, "texture_quad_program"), "transform");
 
-	oglTree tree  = oglGrowTree(0.18,14, 5, 0.75);
+	printf("%d %d\n",transformations[0], transformations[1]);
+
+
+		app.uniforms = transformations;
+
+	oglBuffer fuel = {
+		.handler = oglLoadQuad(&app, 100, 100, 800, 200, 0xFFF0000),
+		.label = "fuel"
+	}; stb_sb_push(app.buffers,fuel);
+
+	oglTree tree = oglGrowTree(0.18,14, 5, 0.75);
 
 	oglBuffer eco_tree = {
 		.handler = oglLoadTree(&tree),
 		.label = "eco_tree"
-	};
-	stb_sb_push(app.buffers,eco_tree);
+	}; stb_sb_push(app.buffers,eco_tree);
 
 	oglBuffer tree_canvas = {
-		.handler = oglLoadQuad(),
+		//.handler = oglLoadQuad(&app, 100, 100, 400, 200),
+		.handler = oglLoadQuad(&app, 100, 100, 300, 300, 0x00FF00),
 		.label = "tree_canvas"
-	};
-	stb_sb_push(app.buffers,tree_canvas);
+	}; stb_sb_push(app.buffers,tree_canvas);
 
 	oglLoadFramebuffer(&app, "fb");
 
+	//Pre farame 
 	oglUseFramebuffer(&app, "fb");
 	glClear(GL_COLOR_BUFFER_BIT);
 	oglUseProg(&app,"tree_program");
 	oglUseBuffer(&app, "eco_tree");
 	oglDrawTree(&tree);	
 
+	//Back to default framebuffer
 	oglUseFramebuffer(&app,NULL);
 
 #ifdef __EMSCRIPTEN__
