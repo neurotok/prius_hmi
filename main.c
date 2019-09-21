@@ -75,7 +75,9 @@ int main(void)
 		app.uniforms = transformations;
 
 	oglBuffer fuel = {
-		.handler = oglLoadQuad(&app, 100, 100, 800, 200, 0xFFF0000),
+		//.handler = oglLoadQuad(&app, 100, 100, 800, 200, 4, 0x00FF00, 0x0000FF, 0x00FFFF, 0xFF0000),
+		//.handler = oglLoadQuad(&app, 100, 100, 800, 200, 2, 0x00FF00, 0x0000FF),
+		.handler = oglLoadQuad(&app, 100, 100, 800, 200, 1, 0xFF0000),
 		.label = "fuel"
 	}; stb_sb_push(app.buffers,fuel);
 
@@ -88,7 +90,7 @@ int main(void)
 
 	oglBuffer tree_canvas = {
 		//.handler = oglLoadQuad(&app, 100, 100, 400, 200),
-		.handler = oglLoadQuad(&app, 100, 100, 300, 300, 0x00FF00),
+		.handler = oglLoadQuad(&app, 100, 100, 300, 300, 1, 0xFFFFFF),
 		.label = "tree_canvas"
 	}; stb_sb_push(app.buffers,tree_canvas);
 

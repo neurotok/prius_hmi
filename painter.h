@@ -19,9 +19,9 @@ static const unsigned int generic_quad_indices[] = {
 };
 
 typedef struct ogl_color{
-	uint8_t r;
-	uint8_t g;
-	uint8_t b;
+	float r;
+	float g;
+	float b;
 }oglColor;
 
 typedef struct ogl_tree{
@@ -32,7 +32,7 @@ typedef struct ogl_tree{
 oglTree oglGrowTree(float size,uint8_t branches, uint8_t scale, float rotation_scale);
 void oglCutTree(oglTree *tree);
 
-GLuint oglLoadQuad(oglApp *app, int x, int y, int w, int h, int col1);
+GLuint oglLoadQuad(oglApp *app, int x, int y, int w, int h, int col, ...);
 void oglDrawQuad(void);
 
 GLuint oglLoadTree(oglTree *tree);

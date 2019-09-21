@@ -1,5 +1,6 @@
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <math.h>
 #include <stdint.h>
@@ -80,27 +81,56 @@ void oglCutTree(oglTree *tree){
 	free(tree->random_branches);
 }
 
-GLuint oglLoadQuad(oglApp *app, int x, int y, int w, int h, int col1){
+GLuint oglLoadQuad(oglApp *app, int x, int y, int w, int h, int nc, ...){
 
+	va_list args;
 
-	float r = ((col1 >> 16) & 0xFF) / 255.0;
-	float g = ((col1 >> 8) & 0xFF) / 255.0;
-	float b = ((col1) & 0xFF) / 255.0;
+	int c[nc];
+
+	va_start( args, nc );
+
+	for( int i = 0; i < nc; i++ )
+		c[i] = va_arg( args, int );
+	va_end( args );
+
+	oglColor col[nc]; 
+
+	for (int i = 0; i < nc; ++i) {
+		
+		col[i].r = ((c[i] >> 16) & 0xFF) / 255.0;
+		col[i].g = ((c[i] >> 8) & 0xFF) / 255.0;
+		col[i].b = ((c[i]) & 0xFF) / 255.0;
+
+	}
+
 
 	float wc = 2.0f * (float)w / (float)(app->window_width);
 	float hc = 2.0f * (float)h / (float)(app->window_height);
 	float xc = 2.0f * (float)x / (float)(app->window_width);
 	float yc = 2.0f * (float)y / (float)(app->window_height);
 
-	printf("%f %f\n", xc, yc);
-
-
 	float quad[] = {
-		-1.0f + xc, 1.0f - yc, 0.0f, r, g, b, 0.0f, 0.0f,
-		-1.0f + xc + wc, 1.0f - yc, 0.0f, r, g, b, 1.0f, 0.0f,
-		-1.0f + xc + wc, 1.0f - yc - hc, 0.0f, r, g, b, 1.0f, 1.0f,
-		-1.0f + xc, 1.0f - yc - hc, 0.0f, r, g, b, 0.0f, 1.0f
+		-1.0f + xc, 1.0f - yc, 0.0f, col[0].r, col[0].g, col[0].b, 0.0f, 0.0f,
+		-1.0f + xc + wc, 1.0f - yc, 0.0f, col[0].r, col[0].g, col[0].b, 1.0f, 0.0f,
+		-1.0f + xc + wc, 1.0f - yc - hc, 0.0f, col[0].r, col[0].g, col[0].b, 1.0f, 1.0f,
+		-1.0f + xc, 1.0f - yc - hc, 0.0f, col[0].r, col[0].g, col[0].b, 0.0f, 1.0f
 	};
+
+
+	switch (nc) {
+		case 2:
+			quad[19] = col[1].r; quad[20] = col[1].g; quad[21] = col[1].b; //bottom right
+			quad[27] = col[1].r; quad[28] = col[1].g; quad[29] = col[1].b; //bottom left
+		break;
+		case 4:
+			quad[11] = col[1].r; quad[12] = col[1].g; quad[13] = col[1].b; //top right
+			quad[19] = col[3].r; quad[20] = col[3].g; quad[21] = col[3].b; //bottom right	
+			quad[27] = col[2].r; quad[28] = col[2].g; quad[29] = col[2].b; //bottom left	
+		break;
+		default:
+			break;
+			
+	}
 	
 	GLuint quad_vao, quad_vbo, quad_ebo;
 
