@@ -21,11 +21,10 @@ void do_frame(void *arg){
 
 	oglApp *app = arg;
 
-	uint8_t fuel_level = 100;
+	uint8_t fuel_level = 30;
 
 	mat4x4 transform;
 	mat4x4_identity(transform);
-	//mat4x4_translate(transform, 1.5f, 0.0f, 0.0f);	
 	mat4x4_translate(transform, 2.0f -  (float)fuel_level / 100.0f * 2.0f, 0.0f, 0.0f);	
 
 	glClearColor(0.56f, 0.72f, 0.69f, 1.0f);
@@ -36,7 +35,9 @@ void do_frame(void *arg){
 	glUniformMatrix4fv(app->uniforms[0], 1, GL_FALSE, transform[0]);
 	oglUseBuffer(app,"fuel");
 	oglDrawQuad();
-
+	//Fuel gage tip
+	oglUseBuffer(app, "tri");
+	oglDrawTriangle();
 	//Tree canvas
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -68,20 +69,16 @@ int main(void)
 	GLuint transformations[2];
 	transformations[0] = glGetUniformLocation(oglGetProg(&app, "simple_program"), "transform");
 	transformations[1] = glGetUniformLocation(oglGetProg(&app, "texture_quad_program"), "transform");
-
+	//Todo
 	printf("%d %d\n",transformations[0], transformations[1]);
-
-
-		app.uniforms = transformations;
+	app.uniforms = transformations;
 
 	oglBuffer fuel = {
-		//.handler = oglLoadQuad(&app, 100, 100, 800, 200, 4, 0x00FF00, 0x0000FF, 0x00FFFF, 0xFF0000),
-		//.handler = oglLoadQuad(&app, 100, 100, 800, 200, 2, 0x00FF00, 0x0000FF),
-		.handler = oglLoadQuad(&app, 100, 100, 800, 200, 1, 0xFF0000),
+		.handler = oglLoadQuad(&app, 0, 0, app.window_width, app.window_height, 1, 0x7BACA3),
 		.label = "fuel"
 	}; stb_sb_push(app.buffers,fuel);
 
-	oglTree tree = oglGrowTree(0.18,14, 5, 0.75);
+	oglTree tree = oglGrowTree(0.16 ,12, 5, 0.75);
 
 	oglBuffer eco_tree = {
 		.handler = oglLoadTree(&tree),
@@ -89,10 +86,15 @@ int main(void)
 	}; stb_sb_push(app.buffers,eco_tree);
 
 	oglBuffer tree_canvas = {
-		//.handler = oglLoadQuad(&app, 100, 100, 400, 200),
-		.handler = oglLoadQuad(&app, 100, 100, 300, 300, 1, 0xFFFFFF),
+		.handler = oglLoadQuad(&app, 0, 0, app.window_height, app.window_height, 1, 0xFFFFFF),
 		.label = "tree_canvas"
 	}; stb_sb_push(app.buffers,tree_canvas);
+
+	oglBuffer tri = {
+		.handler = oglLoadTriangle(&app, -6, 0, 12, 12, 1, 0xFFFFFF),
+		.label = "tri"
+	}; stb_sb_push(app.buffers,tri);
+
 
 	oglLoadFramebuffer(&app, "fb");
 

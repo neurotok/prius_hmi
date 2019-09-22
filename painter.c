@@ -154,7 +154,81 @@ GLuint oglLoadQuad(oglApp *app, int x, int y, int w, int h, int nc, ...){
 	glVertexAttribPointer(2,2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(6*sizeof(float)));
 	glEnableVertexAttribArray(2);
 
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
 	return quad_vao;
+
+}
+
+GLuint oglLoadTriangle(oglApp *app, int x, int y, int w, int h, int nc, ...){
+
+	va_list args;
+
+	int c[nc];
+
+	va_start( args, nc );
+
+	for( int i = 0; i < nc; i++ )
+		c[i] = va_arg( args, int );
+	va_end( args );
+
+	oglColor col[nc]; 
+
+	for (int i = 0; i < nc; ++i) {
+		
+		col[i].r = ((c[i] >> 16) & 0xFF) / 255.0;
+		col[i].g = ((c[i] >> 8) & 0xFF) / 255.0;
+		col[i].b = ((c[i]) & 0xFF) / 255.0;
+	}
+
+	float wc = 2.0f * (float)w / (float)(app->window_width);
+	float hc = 2.0f * (float)h / (float)(app->window_height);
+	float xc = 2.0f * (float)x / (float)(app->window_width);
+	float yc = 2.0f * (float)y / (float)(app->window_height);
+
+	float triangle[] = {
+		-1.0f + xc, 1.0f - yc, 0.0f, col[0].r, col[0].g, col[0].b, 0.0f, 0.0f,
+		-1.0f + xc + wc, 1.0f - yc, 0.0f, col[0].r, col[0].g, col[0].b, 1.0f, 0.0f,
+		-1.0f + xc + wc / 2, 1.0f - yc - hc, 0.0f, col[0].r, col[0].g, col[0].b, 0.5f, 1.0f,
+	};
+
+
+	switch (nc) {
+		case 2:
+			triangle[19] = col[1].r; triangle[20] = col[1].g; triangle[21] = col[1].b; //bottom right
+		break;
+		case 3:
+			triangle[11] = col[1].r; triangle[12] = col[1].g; triangle[13] = col[1].b; //top right
+			triangle[19] = col[2].r; triangle[20] = col[2].g; triangle[21] = col[2].b; //bottom right	
+		break;
+		default:
+			break;
+			
+	}
+	
+	GLuint triangle_vao, traiangel_vbo;
+
+	glGenVertexArrays(1, &triangle_vao);
+	glGenBuffers(1,&traiangel_vbo);
+
+	glBindVertexArray(triangle_vao);
+	glBindBuffer(GL_ARRAY_BUFFER, traiangel_vbo);	
+	glBufferData(GL_ARRAY_BUFFER, sizeof(triangle), triangle, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0,3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	glVertexAttribPointer(1,3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(3*sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+	glVertexAttribPointer(2,2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(6*sizeof(float)));
+	glEnableVertexAttribArray(2);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	return triangle_vao;
 
 }
 
@@ -170,16 +244,23 @@ GLuint oglLoadTree(oglTree *tree){
 	glVertexAttribPointer(0,2,GL_FLOAT, GL_FALSE, 2 * sizeof(float),(void*)0);
 	glEnableVertexAttribArray(0);
 	
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
 	return tree_vao;
 }
 
 void oglDrawTree(oglTree *tree){
+	//Branchs thickness
 	glLineWidth(2);
 	glDrawArrays(GL_LINES, 0, tree->branches_no);
 }
 
 void oglDrawQuad(void){
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+}
+void oglDrawTriangle(void){
+	glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
 

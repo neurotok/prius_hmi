@@ -73,7 +73,9 @@ void oglLoadTexture(oglApp *app, char*filename, char *label){
 		stbi_image_free(data);	
 	}
 	else{
+		//Gen 2x sizeo of the texture
 		glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, app->window_width, app->window_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL );
+		//glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, 2048, 1024, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL );
 		glGenerateMipmap(GL_TEXTURE_2D);
 
 	}
